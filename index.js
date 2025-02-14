@@ -134,14 +134,16 @@ app.get('/proxy', async (req, res) => {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
-        res.setHeader('Content-Disposition', 'attachment; filename="playlist.m3u"');
-        res.setHeader('Content-Type', 'audio/x-mpegurl');
+        // Mantém o mesmo Content-Type da resposta original
+        res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+
         await streamPipeline(response.data, res);
     } catch (error) {
         console.error("Erro ao baixar arquivo:", error);
         res.status(500).json({ error: "Erro ao baixar o arquivo" });
     }
 });
+
 
 server.listen(8000, () => {
     console.log("Server is running on http://localhost:8000");
