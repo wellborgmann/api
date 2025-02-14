@@ -90,13 +90,31 @@ app.get("/checkuser", async (req, res) => {
         if (!exists) {
             return res.status(404).send({ error: "Usuário não encontrado" });
         }
-        res.json({ login, data });
+        const dias = diferencaEmDias(data);
+        const validade = validadeFormatada(data);
+        res.json({ login, dias, validade });
     } catch (error) {
         console.error("Erro na API:", error);
         res.status(500).send({ error: "Erro interno do servidor" });
     }
 });
 
+
+function validadeFormatada(data){
+const hoje = new Date();
+const futuro = new Date('Jun 15, 2025');
+const dia = futuro.getDate().toString().padStart(2, "0");
+const mes = (futuro.getMonth() + 1).toString().padStart(2, "0");
+const ano = futuro.getFullYear();
+return `${dia}/${mes}/${ano}`;
+}
+
+  function diferencaEmDias(dataISO) {
+    const dataTimestamp = new Date(dataISO);
+    const dataAtual = new Date();
+    const diferencaMilissegundos = dataTimestamp.getTime() - dataAtual.getTime();
+    return Math.round(diferencaMilissegundos / (1000 * 60 * 60 * 24));
+  }
 // Iniciar o servidor
 server.listen(8000, () => {
     console.log("Server is running on http://localhost:8000");
