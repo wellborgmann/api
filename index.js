@@ -99,6 +99,11 @@ app.get("/checkuser", async (req, res) => {
     }
 });
 
+
+app.get("/iptv", checkAuth, (req, res) => {
+  res.sendFile("iptv.html", { root: "views" });
+});
+
 function validadeFormatada(data) {
     const futuro = new Date(data);
     const dia = futuro.getDate().toString().padStart(2, "0");
