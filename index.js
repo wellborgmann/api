@@ -4,21 +4,16 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from "dotenv";
 import { Client } from "ssh2";
-dotenv.config();
 import retry from "async-retry";
+import { exec } from "child_process"; // Corrigida a ordem da importação
+
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const app = express(); // Corrigindo a falta da inicialização do Express
+const app = express(); 
 const server = http.createServer(app);
-
-app.get("/checkuser", async (req, res) => {
-    const login = req.query?.login ? req.query.login : false;
-    if(!login)res.send("ERRO");
-    const {data, exists} = await checkLoginExists(login);
-    res.send(data);
-});
-
 
 const connSettings = {
     host: process.env.IP_SSH,
@@ -26,16 +21,14 @@ const connSettings = {
     username: process.env.USER_SSH,
     password: process.env.PASS_SSH,
     readyTimeout: 30000,
-  };
+};
 
-  import { exec } from "child_process";
-
-
+// Função para executar comandos SSH
 async function executeSSHCommand(command) {
     return retry(async (bail) => {
         return new Promise((resolve, reject) => {
             let dataReceived = "";
-            
+
             const process = exec(command, (err, stdout, stderr) => {
                 if (err) {
                     console.error("Erro ao executar comando:", err);
@@ -46,7 +39,7 @@ async function executeSSHCommand(command) {
                 }
                 resolve(stdout.trim());
             });
-            
+
             process.stdout.on("data", (data) => {
                 dataReceived += data;
             });
@@ -61,24 +54,42 @@ async function executeSSHCommand(command) {
     });
 }
 
-
-  async function checkLoginExists(loginName) {
+// Função para verificar se o login existe
+async function checkLoginExists(loginName) {
     let comando = `chage -l ${loginName} | grep -E 'Account expires' | cut -d ' ' -f3-`;
 
     try {
         const dataReceived = await executeSSHCommand(comando);
         return {
-            exists: !!dataReceived, // Se houver dados, o usuário existe
+            exists: !!dataReceived, 
             data: dataReceived || null
         };
     } catch (error) {
         console.error("Erro ao verificar login:", error);
-        return { exists: false };
+        return { exists: false, data: null };
     }
 }
 
+// Endpoint para verificar o usuário
+app.get("/checkuser", async (req, res) => {
+    const login = req.query?.login;
+    if (!login) {
+        return res.status(400).send({ error: "Parâmetro 'login' ausente" });
+    }
 
+    try {
+        const { data, exists } = await checkLoginExists(login);
+        if (!exists) {
+            return res.status(404).send({ error: "Usuário não encontrado" });
+        }
+        res.json({ login, data });
+    } catch (error) {
+        console.error("Erro na API:", error);
+        res.status(500).send({ error: "Erro interno do servidor" });
+    }
+});
 
+// Iniciar o servidor
 server.listen(8000, () => {
     console.log("Server is running on http://localhost:8000");
 });
