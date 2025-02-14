@@ -100,7 +100,7 @@ app.get("/checkuser", async (req, res) => {
 });
 
 
-app.get("/iptv", checkAuth, (req, res) => {
+app.get("/iptv", (req, res) => {
   res.sendFile("iptv.html", { root: "views" });
 });
 
