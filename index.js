@@ -102,7 +102,7 @@ app.get("/checkuser", async (req, res) => {
 
 function validadeFormatada(data){
 const hoje = new Date();
-const futuro = new Date('Jun 15, 2025');
+const futuro = new Date(data);
 const dia = futuro.getDate().toString().padStart(2, "0");
 const mes = (futuro.getMonth() + 1).toString().padStart(2, "0");
 const ano = futuro.getFullYear();
