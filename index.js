@@ -5,7 +5,11 @@ import { fileURLToPath } from 'url';
 import dotenv from "dotenv";
 import { Client } from "ssh2";
 import retry from "async-retry";
-import { exec } from "child_process"; // Corrigida a ordem da importação
+import { exec } from "child_process";
+import axios from 'axios';
+import { createWriteStream } from 'fs';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
 
 dotenv.config();
 
@@ -14,6 +18,7 @@ const __dirname = dirname(__filename);
 
 const app = express(); 
 const server = http.createServer(app);
+const streamPipeline = promisify(pipeline);
 
 const connSettings = {
     host: process.env.IP_SSH,
@@ -23,49 +28,46 @@ const connSettings = {
     readyTimeout: 30000,
 };
 
-// Função para executar comandos SSH
 async function executeSSHCommand(command) {
-      return retry(async (bail) => {
-          return new Promise((resolve, reject) => {
-              const conn = new Client();
-              let dataReceived = "";
-  
-              conn.on("error", (err) => {
-                  console.error("Erro na conexão SSH:", err);
-                  conn.end();
-                  bail(err); 
-              });
-  
-              conn.on("ready", () => {
-                  conn.exec(command, (err, stream) => {
-                      if (err) {
-                          conn.end();
-                          return reject(err);
-                      }
-                      stream
-                          .on("close", () => {
-                              conn.end();
-                              resolve(dataReceived.trim());
-                          })
-                          .on("data", (data) => {
-                              dataReceived += data.toString();
-                          })
-                          .stderr.on("data", (data) => {
-                              console.error("STDERR:", data.toString());
-                          });
-                  });
-              }).connect(connSettings);
-          });
-      }, {
-          retries: 3,
-          minTimeout: 2000,
-      });
-  }
+    return retry(async (bail) => {
+        return new Promise((resolve, reject) => {
+            const conn = new Client();
+            let dataReceived = "";
 
-// Função para verificar se o login existe
+            conn.on("error", (err) => {
+                console.error("Erro na conexão SSH:", err);
+                conn.end();
+                bail(err);
+            });
+
+            conn.on("ready", () => {
+                conn.exec(command, (err, stream) => {
+                    if (err) {
+                        conn.end();
+                        return reject(err);
+                    }
+                    stream
+                        .on("close", () => {
+                            conn.end();
+                            resolve(dataReceived.trim());
+                        })
+                        .on("data", (data) => {
+                            dataReceived += data.toString();
+                        })
+                        .stderr.on("data", (data) => {
+                            console.error("STDERR:", data.toString());
+                        });
+                });
+            }).connect(connSettings);
+        });
+    }, {
+        retries: 3,
+        minTimeout: 2000,
+    });
+}
+
 async function checkLoginExists(loginName) {
     let comando = `chage -l ${loginName} | grep -E 'Account expires' | cut -d ' ' -f3-`;
-
     try {
         const dataReceived = await executeSSHCommand(comando);
         return {
@@ -78,13 +80,11 @@ async function checkLoginExists(loginName) {
     }
 }
 
-// Endpoint para verificar o usuário
 app.get("/checkuser", async (req, res) => {
     const login = req.query?.login;
     if (!login) {
         return res.status(400).send({ error: "Parâmetro 'login' ausente" });
     }
-
     try {
         const { data, exists } = await checkLoginExists(login);
         if (!exists) {
@@ -99,23 +99,45 @@ app.get("/checkuser", async (req, res) => {
     }
 });
 
-
-function validadeFormatada(data){
-const hoje = new Date();
-const futuro = new Date(data);
-const dia = futuro.getDate().toString().padStart(2, "0");
-const mes = (futuro.getMonth() + 1).toString().padStart(2, "0");
-const ano = futuro.getFullYear();
-return `${dia}/${mes}/${ano}`;
+function validadeFormatada(data) {
+    const futuro = new Date(data);
+    const dia = futuro.getDate().toString().padStart(2, "0");
+    const mes = (futuro.getMonth() + 1).toString().padStart(2, "0");
+    const ano = futuro.getFullYear();
+    return `${dia}/${mes}/${ano}`;
 }
 
-  function diferencaEmDias(dataISO) {
+function diferencaEmDias(dataISO) {
     const dataTimestamp = new Date(dataISO);
     const dataAtual = new Date();
     const diferencaMilissegundos = dataTimestamp.getTime() - dataAtual.getTime();
     return Math.round(diferencaMilissegundos / (1000 * 60 * 60 * 24));
-  }
-// Iniciar o servidor
+}
+
+app.get('/proxy', async (req, res) => {
+    const { url } = req.query;
+    if (!url) {
+        return res.status(400).json({ error: "Parâmetro 'url' ausente" });
+    }
+    
+    try {
+        const response = await axios({
+            method: 'get',
+            url,
+            responseType: 'stream',
+            maxRedirects: 5,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+
+        res.setHeader('Content-Disposition', 'attachment; filename="playlist.m3u"');
+        res.setHeader('Content-Type', 'audio/x-mpegurl');
+        await streamPipeline(response.data, res);
+    } catch (error) {
+        console.error("Erro ao baixar arquivo:", error);
+        res.status(500).json({ error: "Erro ao baixar o arquivo" });
+    }
+});
+
 server.listen(8000, () => {
     console.log("Server is running on http://localhost:8000");
 });
