@@ -25,34 +25,42 @@ const connSettings = {
 
 // Função para executar comandos SSH
 async function executeSSHCommand(command) {
-    return retry(async (bail) => {
-        return new Promise((resolve, reject) => {
-            let dataReceived = "";
-
-            const process = exec(command, (err, stdout, stderr) => {
-                if (err) {
-                    console.error("Erro ao executar comando:", err);
-                    return reject(err);
-                }
-                if (stderr) {
-                    console.error("STDERR:", stderr);
-                }
-                resolve(stdout.trim());
-            });
-
-            process.stdout.on("data", (data) => {
-                dataReceived += data;
-            });
-
-            process.stderr.on("data", (data) => {
-                console.error("STDERR:", data);
-            });
-        });
-    }, {
-        retries: 3,
-        minTimeout: 2000,
-    });
-}
+      return retry(async (bail) => {
+          return new Promise((resolve, reject) => {
+              const conn = new Client();
+              let dataReceived = "";
+  
+              conn.on("error", (err) => {
+                  console.error("Erro na conexão SSH:", err);
+                  conn.end();
+                  bail(err); 
+              });
+  
+              conn.on("ready", () => {
+                  conn.exec(command, (err, stream) => {
+                      if (err) {
+                          conn.end();
+                          return reject(err);
+                      }
+                      stream
+                          .on("close", () => {
+                              conn.end();
+                              resolve(dataReceived.trim());
+                          })
+                          .on("data", (data) => {
+                              dataReceived += data.toString();
+                          })
+                          .stderr.on("data", (data) => {
+                              console.error("STDERR:", data.toString());
+                          });
+                  });
+              }).connect(connSettings);
+          });
+      }, {
+          retries: 3,
+          minTimeout: 2000,
+      });
+  }
 
 // Função para verificar se o login existe
 async function checkLoginExists(loginName) {
