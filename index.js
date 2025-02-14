@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import dotenv from "dotenv";
 import { Client } from "ssh2";
 dotenv.config();
-
+import retry from "async-retry";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
