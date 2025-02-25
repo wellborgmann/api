@@ -134,7 +134,7 @@ app.get('/proxy', async (req, res) => {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
-        // Mantém o mesmo Content-Type da resposta original
+        // Mantém o mesmo Content-Type da resposta originalaa
         res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
 
         await streamPipeline(response.data, res);
