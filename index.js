@@ -101,6 +101,10 @@ app.get("/checkuser", async (req, res) => {
         }
         const dias = diferencaEmDias(data);
         const validade = validadeFormatada(data);
+        const deviceId = queryString
+        .replace("deviceId=", "")
+        .replace("\n", "")
+        .trim();
         const resultado = {
             username: login,
             expiration_date: validade,
