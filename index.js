@@ -81,12 +81,19 @@ async function checkLoginExists(loginName) {
 }
 
 app.get("/checkuser", async (req, res) => {
-  const [path, queryString] = req.query.user.split("?");
-  let login = path.replace("/check/", "");
+    const userParam = req.query.user;
+    
+    if (!userParam) {
+        return res.status(400).send({ error: "Parâmetro 'user' ausente" });
+    }
+
+    const [path, queryString] = userParam.split("?");
+    let login = path.replace("/check/", "");
 
     if (!login) {
         return res.status(400).send({ error: "Parâmetro 'login' ausente" });
     }
+
     try {
         const { data, exists } = await checkLoginExists(login);
         if (!exists) {
