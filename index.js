@@ -81,6 +81,8 @@ async function checkLoginExists(loginName) {
 }
 
 app.get("/checkuser", async (req, res) => {
+    console.log(req.query)
+    console.log(req.body)
     const userParam = req.query.user;
     
     if (!userParam) {
