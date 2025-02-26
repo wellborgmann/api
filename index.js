@@ -101,7 +101,14 @@ app.get("/checkuser", async (req, res) => {
         }
         const dias = diferencaEmDias(data);
         const validade = validadeFormatada(data);
-        const resultado = {expiration_days: dias, expiration_date: validade, user: login};
+        const resultado = {
+            username: login,
+            expiration_date: validade,
+            expiration_days: dias,
+            deviceId: deviceId,
+            count_connections: "1",
+            limit_connections: "1",
+        }
         res.json(resultado);
     } catch (error) {
         console.error("Erro na API:", error);
