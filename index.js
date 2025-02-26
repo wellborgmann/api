@@ -81,8 +81,6 @@ async function checkLoginExists(loginName) {
 }
 
 app.get("/checkuser", async (req, res) => {
-    console.log("###",req.query.user)
-    
     const userParam = req.query.user;
     
     if (!userParam) {
@@ -103,7 +101,8 @@ app.get("/checkuser", async (req, res) => {
         }
         const dias = diferencaEmDias(data);
         const validade = validadeFormatada(data);
-        res.json({ login, dias, validade });
+        const resultado = {expiration_days: dias, expiration_date: validade, user: login};
+        res.json(resultado);
     } catch (error) {
         console.error("Erro na API:", error);
         res.status(500).send({ error: "Erro interno do servidor" });
