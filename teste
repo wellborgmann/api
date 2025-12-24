@@ -1,0 +1,53 @@
+[
+    {
+        "id":1,
+        "category_id":1,
+        "name":"TIM gringo online",
+        "description":"Saldo válido",
+        "config_payload":{
+            "payload":"GET / HTTP/1.1[lf]Host: gringo.wproxyw.shop[lf]Upgrade: websocket[lf][lf]",
+            "sni":"gringo.wproxyw.shop"
+        },
+        "config_openvpn":null,
+        "config_v2ray":null,
+        "auth":{
+            "username":null,
+            "password":null,
+            "v2ray_uuid":null
+        },
+        "proxy":{
+            "host":"162.247.241.4",
+            "port":443
+        },
+        "server":{
+            "host":"gringo.wproxyw.shop",
+            "port":443
+        },
+        "dnstt_key":null,
+        "dnstt_server":null,
+        "dnstt_name_server":null,
+        "hy_obfs":null,
+        "hy_up_mbps":100,
+        "hy_down_mbps":150,
+        "hy_insecure":true,
+        "hy_port":"13375",
+        "hy_version":1,
+        "dns_server":{
+            "dns1":"2001:4860:4860::8888",
+            "dns2":"1.1.1.1"
+        },
+        "udp_ports":[
+            7100,
+            7200,
+            7300,
+            7400
+        ],
+        "mode":"SSL_PROXY",
+        "tls_version":"TLSv1.2",
+        "status":"ACTIVE",
+        "url_check_user":"https://api-psi-rose-29.vercel.app/checkuser?user=",
+        "icon":"https://i.ibb.co/YPPMKJw/ic-tim.png",
+        "sorter":1
+    }
+   
+]
