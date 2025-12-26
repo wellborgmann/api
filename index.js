@@ -95,6 +95,8 @@ app.get("/checkuser", async (req, res) => {
     }
 
     try {
+
+        console.log("LOGIN QUERY", login);
         const { data, exists } = await checkLoginExists(login);
         if (!exists) {
             return res.status(404).send({ error: "Usuário não encontrado" });
