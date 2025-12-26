@@ -88,6 +88,7 @@ app.get("/checkuser", async (req, res) => {
     }
 
     const [path, queryString] = userParam.split("?");
+    console.log(path)
     let login = path.replace("/check/", "");
 
     if (!login) {
@@ -102,16 +103,13 @@ app.get("/checkuser", async (req, res) => {
             return res.status(404).send({ error: "Usuário não encontrado" });
         }
         const dias = diferencaEmDias(data);
+        console.log(data)
         const validade = validadeFormatada(data);
-        const deviceId = queryString
-        .replace("deviceId=", "")
-        .replace("\n", "")
-        .trim();
         const resultado = {
             username: login,
             expiration_date: validade,
             expiration_days: dias,
-            deviceId: deviceId,
+            deviceId: "",
             count_connections: "1",
             limit_connections: "1",
         }
@@ -128,12 +126,17 @@ app.get("/iptv", (req, res) => {
 });
 
 function validadeFormatada(data) {
-    const futuro = new Date(data);
-    const dia = futuro.getDate().toString().padStart(2, "0");
-    const mes = (futuro.getMonth() + 1).toString().padStart(2, "0");
-    const ano = futuro.getFullYear();
-    return `${dia}/${mes}/${ano}`;
+    const d = new Date(data);
+
+    // Se a data for inválida OU ano absurdo
+    if (isNaN(d.getTime()) || d.getFullYear() > 9999) {
+        const agora = new Date();
+        return agora.toLocaleDateString("pt-BR");
+    }
+
+    return d.toLocaleDateString("pt-BR");
 }
+
 
 function diferencaEmDias(dataISO) {
     const dataTimestamp = new Date(dataISO);
@@ -171,3 +174,7 @@ app.get('/proxy', async (req, res) => {
 server.listen(8000, () => {
     console.log("Server is running on http://localhost:8000");
 });
+
+
+
+
