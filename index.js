@@ -26,7 +26,14 @@ const connSettings = {
     username: process.env.USER_SSH,
     password: process.env.PASS_SSH,
     readyTimeout: 30000,
+    // Adicione isso para dar suporte a servidores mais novos/antigos
+    algorithms: {
+        serverHostKey: ['ssh-rsa', 'ecdsa-sha2-nistp256', 'ssh-ed25519'],
+    }
 };
+
+// Dentro da função executeSSHCommand, antes do connect:
+console.log(`Conectando em: ${connSettings.host} como ${connSettings.username} e ${connSettings.password}`);
 
 async function executeSSHCommand(command) {
     return retry(async (bail) => {
